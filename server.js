@@ -11,11 +11,20 @@ app.use(bodyParser.urlencoded({extended: true}))
 
 // MONGODB SETUP
 
-mongoose.connect('mongodb://localhost:27017/redisdemo',{
+// mongoose.connect('mongodb://localhost:27017/redisdemo',{
+//     useCreateIndex: true,
+//     useNewUrlParser: true,
+//     useUnifiedTopology: true
+// })
+mongoose.connect('mongodb://mongodb.default.svc.cluster.local:27017/redisdemo',{
+    auth: {"authSource": "admin"},
+    user: "admin",
+    pass: "password",
     useCreateIndex: true,
     useNewUrlParser: true,
     useUnifiedTopology: true
 })
+
 mongoose.connection
         .once('open', ()=>console.log('connected to database'))
         .on('error',(err)=>console.log("connection to database failed!!",err))
