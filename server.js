@@ -16,10 +16,10 @@ app.use(bodyParser.urlencoded({extended: true}))
 //     useNewUrlParser: true,
 //     useUnifiedTopology: true
 // })
-mongoose.connect('mongodb://mongodb.default.svc.cluster.local:27017/redisdemo',{
+mongoose.connect('mongodb://mongod-0.mongodb.default.svc.cluster.local:27017,mongod-1.mongodb.default.svc.cluster.local:27017,mongod-2.mongodb.default.svc.cluster.local:27017/redisdemo',{
     auth: {"authSource": "admin"},
     user: "admin",
-    pass: "password",
+    pass: "",
     useCreateIndex: true,
     useNewUrlParser: true,
     useUnifiedTopology: true
@@ -37,14 +37,7 @@ app.use(express.static('public'));
 // ROUTES
 
 app.get('/',(req,res)=>{
-    vehicle.find({})
-            .then((data)=>{
-                res.json({found: true, data: data});
-            })
-            .catch((err)=>{
-                console.log(err)
-                res.json({found: false, data: null});
-            })
+    res.json({found: true, data: "hello"});
 })
 
 app.post('/vehicle',(req,res)=>{
@@ -53,7 +46,7 @@ app.post('/vehicle',(req,res)=>{
         .then((v_data)=>{
             console.log(v_data);
             res.json({save: true})
-            clearCache(v_data.vehicleType)
+//            clearCache(v_data.vehicleType)
         })
         .catch((err)=>{
             console.log(err)
@@ -79,7 +72,7 @@ app.get('/:vehicleType/', (req,res)=>{
 
 app.get('/:vehicleType/:sno', (req,res)=>{
     vehicle.findOne({serialno: req.params.sno,vehicleType: req.params.vehicleType})
-                .cache(req.params.vehicleType)
+                .cache(req.params.sno)
                 .then((data)=>{
                     if(data){
                         res.json({found: true, data: data})
@@ -94,20 +87,3 @@ app.get('/:vehicleType/:sno', (req,res)=>{
 })
 
 app.listen(3000,()=>console.log("server started at port:3000"))
-
-// 'use strict';
-
-// const express = require('express')
-
-// // Constants
-// const PORT = 8080;
-// const HOST = '0.0.0.0';
-
-// //App
-// const app = express();
-// app.get('/', (req, res) => {
-//     res.send('Hello World');
-// });
-
-// app.listen(PORT, HOST);
-// console.log(`Running on http://${HOST}:${PORT}`);

@@ -1,11 +1,39 @@
 // ---------------------------     DONT FORGET TO START THE REDIS SERVER USING "redis-server"  -------------------------
 const mongoose = require('mongoose')
-const redis = require('redis')
+const redis = require('ioredis')
 const util = require('util')
 
-const redisUrl = 'redis://127.0.0.1:6379';
-const client = redis.createClient(redisUrl);
-client.hget = util.promisify(client.hget);                // client get does not support promises. this is a way to promisify them
+const client = new redis.Cluster([
+    {
+      port: 6379,
+      host: "10.42.2.106",
+    },
+    {
+      port: 6379,
+      host: "10.42.0.109",
+    },
+    {
+      porti: 6379,
+      host: "10.42.2.108",
+    },
+    {
+      port: 6379,
+      host: "10.42.02.109",
+    },
+    {
+      port: 6379,
+      host: "10.42.2.110",
+    },
+    {
+      port: 6379,
+      host: "10.42.2.111",
+    },
+]);
+
+
+// const redisUrl = 'redis://127.0.0.1:6379';
+// const client = redis.createClient(redisUrl);
+// client.hget = util.promisify(client.hget);                // client get does not support promises. this is a way to promisify them
 
 mongoose.Query.prototype.cache = function(hkey){
     this.useCache = true;
@@ -47,8 +75,10 @@ mongoose.Query.prototype.exec = async function(){ // Modifing the exec property 
          * We need to convert normal json into mongoose model instance before returning to app.js, 
          * this.model() is used for this purpose
         */
-        const result = Array.isArray(doc) ? doc.map((d)=>new this.model(d)) : new this.model(doc);
-        return {source: 'redis', data: result};
+        return  Array.isArray(doc)
+                ? doc.map((d)=>new this.model(d))
+                : new this.model(doc);
+
     }
 
     // Data not present in redis cache, get the data from Mongodb and save the data to redis cache also
@@ -58,13 +88,12 @@ mongoose.Query.prototype.exec = async function(){ // Modifing the exec property 
     if(result){ // mongodb retured non-null value (can be empty array)
         if(Array.isArray(result) && result.length==0){
             // array is empty
-            return {source: 'mongo', data: null};
+            return null
         }
         else{
             // data is there (non-empty array or an single object)
             client.hset(this.hashkey, key, JSON.stringify(result)); // saving data in redis cache
             return result
-            return {source: 'mongo', data: result};
         }
     }else{ // database returned null value
         console.log("data not present")
